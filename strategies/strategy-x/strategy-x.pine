@@ -1,0 +1,21 @@
+//@version=5
+strategy("Strategy X", overlay = true)
+
+// Starter strategy scaffold. Replace this logic with the final rules.
+fastLength = input.int(9, "Fast EMA length", minval = 1)
+slowLength = input.int(21, "Slow EMA length", minval = 1)
+
+fastEma = ta.ema(close, fastLength)
+slowEma = ta.ema(close, slowLength)
+
+longCondition = ta.crossover(fastEma, slowEma)
+exitCondition = ta.crossunder(fastEma, slowEma)
+
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+if exitCondition
+    strategy.close("Long")
+
+plot(fastEma, "Fast EMA", color = color.new(color.teal, 0))
+plot(slowEma, "Slow EMA", color = color.new(color.orange, 0))

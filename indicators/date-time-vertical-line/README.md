@@ -2,6 +2,10 @@
 
 `date-time-vertical-line.pine` is a TradingView Pine Script indicator that draws one vertical line at a user-selected date and time.
 
+## Files
+
+- `date-time-vertical-line.pine` - indicator source code
+
 ## Features
 
 - Select the target date and time from the indicator settings.
@@ -12,7 +16,7 @@
 ## Installation
 
 1. Open TradingView and go to **Pine Editor**.
-2. Copy the contents of `indicators/date-time-vertical-line.pine`.
+2. Copy the contents of `date-time-vertical-line.pine`.
 3. Paste the code into Pine Editor.
 4. Click **Save**.
 5. Click **Add to chart**.
