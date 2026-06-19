@@ -7,7 +7,7 @@ This repository is organized as a collection of TradingView Pine Script projects
 ```text
 .
 ├── indicators/
-│   └── date-time-vertical-line/
+│   └── date-time-vertical-line-indicator/
 │       ├── date-time-vertical-line.pine
 │       └── README.md
 ├── strategies/
@@ -21,7 +21,7 @@ This repository is organized as a collection of TradingView Pine Script projects
 
 ## Indicators
 
-- [Date/Time Vertical Line](indicators/date-time-vertical-line/) lets you enter a target date and time, then draws a vertical line at that timestamp on the chart.
+- [Date/Time Vertical Line Indicator](indicators/date-time-vertical-line-indicator/) lets you enter a target date and time, then draws a vertical line at that timestamp on the chart.
 
 ## Strategies
 
@@ -58,6 +58,6 @@ strategies/
 
 ## Naming conventions
 
-- Use lowercase folder and file names with hyphens, for example `date-time-vertical-line`.
+- Use lowercase folder and file names with hyphens, for example `date-time-vertical-line-indicator`.
 - Keep one indicator, strategy, or library per project folder.
 - Keep the script README inside the same folder as the Pine Script file.
