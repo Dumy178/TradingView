@@ -1,0 +1,6 @@
+//@version=5
+indicator("Indicator Name", overlay = true)
+
+// Add inputs here.
+
+// Add indicator logic here.

@@ -1,0 +1,71 @@
+//@version=5
+indicator("Date/Time Vertical Line", overlay = true, max_lines_count = 10)
+
+// User inputs
+lineTime = input.time(
+     timestamp("2026-01-01T09:30:00"),
+     "Date and time",
+     confirm = true,
+     tooltip = "Choose the exact date and time where the vertical line should be drawn. The timestamp uses the chart/exchange time zone shown by TradingView."
+)
+
+lineColor = input.color(color.new(color.blue, 0), "Line color")
+lineWidth = input.int(2, "Line width", minval = 1, maxval = 5)
+lineStyleInput = input.string("Solid", "Line style", options = ["Solid", "Dashed", "Dotted"])
+showLabel = input.bool(true, "Show timestamp label")
+labelText = input.string("Selected time", "Label text")
+
+lineStyle = switch lineStyleInput
+    "Dashed" => line.style_dashed
+    "Dotted" => line.style_dotted
+    => line.style_solid
+
+// Keep a single line/label on the chart and update them when inputs change.
+var line selectedTimeLine = na
+var label selectedTimeLabel = na
+
+if barstate.islast
+    if na(selectedTimeLine)
+        selectedTimeLine := line.new(
+             x1 = lineTime,
+             y1 = low,
+             x2 = lineTime,
+             y2 = high,
+             xloc = xloc.bar_time,
+             extend = extend.both,
+             color = lineColor,
+             style = lineStyle,
+             width = lineWidth
+        )
+    else
+        line.set_x1(selectedTimeLine, lineTime)
+        line.set_x2(selectedTimeLine, lineTime)
+        line.set_y1(selectedTimeLine, low)
+        line.set_y2(selectedTimeLine, high)
+        line.set_extend(selectedTimeLine, extend.both)
+        line.set_color(selectedTimeLine, lineColor)
+        line.set_style(selectedTimeLine, lineStyle)
+        line.set_width(selectedTimeLine, lineWidth)
+
+    if showLabel
+        labelDisplayText = labelText + "\n" + str.format_time(lineTime, "yyyy-MM-dd HH:mm")
+        if na(selectedTimeLabel)
+            selectedTimeLabel := label.new(
+                 x = lineTime,
+                 y = high,
+                 text = labelDisplayText,
+                 xloc = xloc.bar_time,
+                 yloc = yloc.price,
+                 style = label.style_label_down,
+                 textcolor = color.white,
+                 color = lineColor
+            )
+        else
+            label.set_x(selectedTimeLabel, lineTime)
+            label.set_y(selectedTimeLabel, high)
+            label.set_text(selectedTimeLabel, labelDisplayText)
+            label.set_color(selectedTimeLabel, lineColor)
+            label.set_textcolor(selectedTimeLabel, color.white)
+    else if not na(selectedTimeLabel)
+        label.delete(selectedTimeLabel)
+        selectedTimeLabel := na
