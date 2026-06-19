@@ -9,6 +9,7 @@
 ## Features
 
 - Select the target date and time with TradingView's interactive time input.
+- Format the label in a configurable display time zone.
 - Draw a vertical line that extends through the full chart pane.
 - Optionally snap the marker to the bar containing the selected timestamp.
 - Customize line color, width, style, and extension behavior.
@@ -29,9 +30,10 @@
 1. Add the indicator to your chart.
 2. When TradingView asks for the input point, click the chart time you want to mark.
 3. To move the marker later, select the indicator and move the built-in time marker, or use **Reset points** from the indicator menu and click a new chart point.
-4. Adjust the visual options from the indicator settings if needed.
+4. Set **Display time zone** to match the timezone shown at the bottom of your TradingView chart, for example `UTC+3`.
+5. Adjust the visual options from the indicator settings if needed.
 
-TradingView interprets the selected timestamp using the chart/exchange timezone displayed in the platform.
+TradingView stores selected times as timezone-independent UNIX timestamps. Pine Script can format those timestamps in different timezones, but scripts cannot read the chart timezone automatically. If the label is a few hours different from the value in the input box, update **Display time zone** to match your chart timezone.
 
 ## Note about on-chart editing
 

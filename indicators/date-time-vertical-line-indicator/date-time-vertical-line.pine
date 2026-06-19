@@ -13,6 +13,12 @@ int selectedTime = input.time(
      group = markerGroup,
      tooltip = "Pick the marker time. With this interactive time input, TradingView shows a movable vertical marker when the script is selected. Use the script menu's Reset points action to choose a new point on the chart."
 )
+string displayTimezone = input.string(
+     "UTC+3",
+     "Display time zone",
+     group = markerGroup,
+     tooltip = "Controls the time zone used in the label and info panel. Pine cannot read the chart timezone automatically, so set this to match the timezone shown at the bottom of your chart, for example UTC+3."
+)
 bool snapToContainingBar = input.bool(
      true,
      "Snap to containing bar",
@@ -75,7 +81,7 @@ labelStyle = switch labelPositionInput
     "Middle" => label.style_label_left
     => label.style_label_down
 
-string formattedTime = str.format_time(selectedTime, "yyyy-MM-dd HH:mm")
+string formattedTime = str.format_time(selectedTime, "yyyy-MM-dd HH:mm", displayTimezone)
 string markerMode = snapToContainingBar ? "Containing bar" : "Exact timestamp"
 string barsText = na(barsFromSelected) ? "not on loaded bars" : str.tostring(math.abs(barsFromSelected)) + (barsFromSelected == 0 ? " bars away" : barsFromSelected > 0 ? " bars ago" : " bars ahead")
 string labelText = labelTitle + "\n" + formattedTime + (showBarDistance ? "\n" + barsText : "")
@@ -135,7 +141,7 @@ if barstate.islast
     if showPanel
         table.cell(infoPanel, 0, 0, "Date/Time Vertical Line", text_color = color.white, bgcolor = lineColor)
         table.cell(infoPanel, 0, 1, formattedTime, text_color = color.white, bgcolor = color.new(color.black, 15))
-        table.cell(infoPanel, 0, 2, markerMode, text_color = color.white, bgcolor = color.new(color.black, 15))
+        table.cell(infoPanel, 0, 2, displayTimezone + " | " + markerMode, text_color = color.white, bgcolor = color.new(color.black, 15))
         table.cell(infoPanel, 0, 3, barsText, text_color = color.white, bgcolor = color.new(color.black, 15))
     else
         table.clear(infoPanel, 0, 0, 0, 3)
