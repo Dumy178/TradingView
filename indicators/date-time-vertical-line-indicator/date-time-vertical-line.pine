@@ -1,71 +1,143 @@
-//@version=5
-indicator("Date/Time Vertical Line", overlay = true, max_lines_count = 10)
+//@version=6
+indicator("Date/Time Vertical Line", overlay = true, max_lines_count = 5, max_labels_count = 5)
 
-// User inputs
-lineTime = input.time(
+string markerGroup = "Marker"
+string styleGroup = "Line style"
+string labelGroup = "Label"
+string panelGroup = "Info panel"
+
+int selectedTime = input.time(
      timestamp("2026-01-01T09:30:00"),
      "Date and time",
      confirm = true,
-     tooltip = "Choose the exact date and time where the vertical line should be drawn. The timestamp uses the chart/exchange time zone shown by TradingView."
+     group = markerGroup,
+     tooltip = "Pick the marker time. With this interactive time input, TradingView shows a movable vertical marker when the script is selected. Use the script menu's Reset points action to choose a new point on the chart."
 )
+bool snapToContainingBar = input.bool(
+     true,
+     "Snap to containing bar",
+     group = markerGroup,
+     tooltip = "When enabled, the line is drawn on the bar containing the selected timestamp. When disabled, the line is drawn at the exact timestamp."
+)
+int rangeLookback = input.int(300, "Chart height lookback", minval = 20, maxval = 5000, group = markerGroup)
 
-lineColor = input.color(color.new(color.blue, 0), "Line color")
-lineWidth = input.int(2, "Line width", minval = 1, maxval = 5)
-lineStyleInput = input.string("Solid", "Line style", options = ["Solid", "Dashed", "Dotted"])
-showLabel = input.bool(true, "Show timestamp label")
-labelText = input.string("Selected time", "Label text")
+color lineColor = input.color(color.new(color.blue, 0), "Color", group = styleGroup, inline = "line")
+int lineWidth = input.int(2, "Width", minval = 1, maxval = 5, group = styleGroup, inline = "line")
+string lineStyleInput = input.string("Solid", "Style", options = ["Solid", "Dashed", "Dotted"], group = styleGroup)
+string extendInput = input.string("Full chart", "Extend", options = ["Full chart", "Visible range"], group = styleGroup)
+
+bool showLabel = input.bool(true, "Show label", group = labelGroup)
+string labelTitle = input.string("Selected time", "Title", group = labelGroup)
+string labelPositionInput = input.string("Top", "Position", options = ["Top", "Middle", "Bottom"], group = labelGroup)
+string labelSizeInput = input.string("Normal", "Size", options = ["Tiny", "Small", "Normal", "Large"], group = labelGroup)
+color labelTextColor = input.color(color.white, "Text color", group = labelGroup)
+bool showBarDistance = input.bool(true, "Show bars from selected time", group = labelGroup)
+
+bool showPanel = input.bool(true, "Show info panel", group = panelGroup)
+string panelPositionInput = input.string("Top right", "Position", options = ["Top left", "Top right", "Bottom left", "Bottom right"], group = panelGroup)
 
 lineStyle = switch lineStyleInput
     "Dashed" => line.style_dashed
     "Dotted" => line.style_dotted
     => line.style_solid
 
-// Keep a single line/label on the chart and update them when inputs change.
-var line selectedTimeLine = na
-var label selectedTimeLabel = na
+lineExtend = extendInput == "Full chart" ? extend.both : extend.none
+
+labelSize = switch labelSizeInput
+    "Tiny" => size.tiny
+    "Small" => size.small
+    "Large" => size.large
+    => size.normal
+
+panelPosition = switch panelPositionInput
+    "Top left" => position.top_left
+    "Bottom left" => position.bottom_left
+    "Bottom right" => position.bottom_right
+    => position.top_right
+
+bool selectedTimeIsInBar = time <= selectedTime and (na(time_close) ? time == selectedTime : selectedTime < time_close)
+int containingBarTime = ta.valuewhen(selectedTimeIsInBar, time, 0)
+int markerTime = snapToContainingBar and not na(containingBarTime) ? containingBarTime : selectedTime
+
+int selectedBarIndex = ta.valuewhen(selectedTimeIsInBar, bar_index, 0)
+int barsFromSelected = na(selectedBarIndex) ? na : bar_index - selectedBarIndex
+
+float rangeHigh = ta.highest(high, rangeLookback)
+float rangeLow = ta.lowest(low, rangeLookback)
+float rangeMiddle = math.avg(rangeHigh, rangeLow)
+float labelY = switch labelPositionInput
+    "Bottom" => rangeLow
+    "Middle" => rangeMiddle
+    => rangeHigh
+
+labelStyle = switch labelPositionInput
+    "Bottom" => label.style_label_up
+    "Middle" => label.style_label_left
+    => label.style_label_down
+
+string formattedTime = str.format_time(selectedTime, "yyyy-MM-dd HH:mm")
+string markerMode = snapToContainingBar ? "Containing bar" : "Exact timestamp"
+string barsText = na(barsFromSelected) ? "not on loaded bars" : str.tostring(math.abs(barsFromSelected)) + (barsFromSelected == 0 ? " bars away" : barsFromSelected > 0 ? " bars ago" : " bars ahead")
+string labelText = labelTitle + "\n" + formattedTime + (showBarDistance ? "\n" + barsText : "")
+
+var line markerLine = na
+var label markerLabel = na
+var table infoPanel = table.new(panelPosition, 1, 4, border_width = 1)
 
 if barstate.islast
-    if na(selectedTimeLine)
-        selectedTimeLine := line.new(
-             x1 = lineTime,
-             y1 = low,
-             x2 = lineTime,
-             y2 = high,
+    if na(markerLine)
+        markerLine := line.new(
+             x1 = markerTime,
+             y1 = rangeLow,
+             x2 = markerTime,
+             y2 = rangeHigh,
              xloc = xloc.bar_time,
-             extend = extend.both,
+             extend = lineExtend,
              color = lineColor,
              style = lineStyle,
              width = lineWidth
         )
     else
-        line.set_x1(selectedTimeLine, lineTime)
-        line.set_x2(selectedTimeLine, lineTime)
-        line.set_y1(selectedTimeLine, low)
-        line.set_y2(selectedTimeLine, high)
-        line.set_extend(selectedTimeLine, extend.both)
-        line.set_color(selectedTimeLine, lineColor)
-        line.set_style(selectedTimeLine, lineStyle)
-        line.set_width(selectedTimeLine, lineWidth)
+        line.set_x1(markerLine, markerTime)
+        line.set_x2(markerLine, markerTime)
+        line.set_y1(markerLine, rangeLow)
+        line.set_y2(markerLine, rangeHigh)
+        line.set_extend(markerLine, lineExtend)
+        line.set_color(markerLine, lineColor)
+        line.set_style(markerLine, lineStyle)
+        line.set_width(markerLine, lineWidth)
 
     if showLabel
-        labelDisplayText = labelText + "\n" + str.format_time(lineTime, "yyyy-MM-dd HH:mm")
-        if na(selectedTimeLabel)
-            selectedTimeLabel := label.new(
-                 x = lineTime,
-                 y = high,
-                 text = labelDisplayText,
+        if na(markerLabel)
+            markerLabel := label.new(
+                 x = markerTime,
+                 y = labelY,
+                 text = labelText,
                  xloc = xloc.bar_time,
                  yloc = yloc.price,
-                 style = label.style_label_down,
-                 textcolor = color.white,
+                 style = labelStyle,
+                 size = labelSize,
+                 textcolor = labelTextColor,
                  color = lineColor
             )
         else
-            label.set_x(selectedTimeLabel, lineTime)
-            label.set_y(selectedTimeLabel, high)
-            label.set_text(selectedTimeLabel, labelDisplayText)
-            label.set_color(selectedTimeLabel, lineColor)
-            label.set_textcolor(selectedTimeLabel, color.white)
-    else if not na(selectedTimeLabel)
-        label.delete(selectedTimeLabel)
-        selectedTimeLabel := na
+            label.set_x(markerLabel, markerTime)
+            label.set_y(markerLabel, labelY)
+            label.set_text(markerLabel, labelText)
+            label.set_style(markerLabel, labelStyle)
+            label.set_size(markerLabel, labelSize)
+            label.set_color(markerLabel, lineColor)
+            label.set_textcolor(markerLabel, labelTextColor)
+    else if not na(markerLabel)
+        label.delete(markerLabel)
+        markerLabel := na
+
+    if showPanel
+        table.cell(infoPanel, 0, 0, "Date/Time Vertical Line", text_color = color.white, bgcolor = lineColor)
+        table.cell(infoPanel, 0, 1, formattedTime, text_color = color.white, bgcolor = color.new(color.black, 15))
+        table.cell(infoPanel, 0, 2, markerMode, text_color = color.white, bgcolor = color.new(color.black, 15))
+        table.cell(infoPanel, 0, 3, barsText, text_color = color.white, bgcolor = color.new(color.black, 15))
+    else
+        table.clear(infoPanel, 0, 0, 0, 3)
+
+alertcondition(selectedTimeIsInBar, "Selected time reached", "The chart has reached the selected Date/Time Vertical Line marker.")
