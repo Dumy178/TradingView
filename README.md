@@ -7,10 +7,12 @@ This repository is organized as a collection of TradingView Pine Script projects
 ```text
 .
 ├── indicators/
+│   ├── README.md
 │   └── date-time-vertical-line-indicator/
 │       ├── date-time-vertical-line.pine
 │       └── README.md
 ├── strategies/
+│   ├── README.md
 │   └── strategy-x/
 │       ├── strategy-x.pine
 │       └── README.md
